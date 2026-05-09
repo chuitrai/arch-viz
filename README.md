@@ -1,52 +1,52 @@
 # Architecture Visualizer 🚀
 
-Visualize your project structure with a stunning, interactive force-directed graph directly inside VS Code.
+Trực quan hóa cấu trúc dự án của bạn với biểu đồ tương tác sinh động ngay trong VS Code.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![VS Code](https://img.shields.io/badge/vscode-extension-blueviolet.svg)
 
-## ✨ Features
+## ✨ Tính năng nổi bật
 
-- **Interactive Graph**: Drag, zoom, and explore your project's architecture.
-- **Physics-Based Layout**: Files and folders automatically arrange themselves for clarity.
-- **Real-time Scanning**: Analyzes your workspace dynamically.
-- **Glassmorphism UI**: Modern, premium dark-themed interface.
-- **Quick Insights**: Hover over nodes to see file paths, sizes, and types.
+- **Biểu đồ tương tác**: Kéo, thả, thu phóng và khám phá cấu trúc dự án.
+- **Sắp xếp vật lý**: Các tệp và thư mục tự động sắp xếp vị trí để tối ưu tầm nhìn.
+- **Quét thời gian thực**: Phân tích workspace của bạn một cách năng động.
+- **Giao diện Glassmorphism**: Thiết kế hiện đại, cao cấp với chế độ tối (dark mode).
+- **Thông tin nhanh**: Di chuột qua các nút (node) để xem đường dẫn, kích thước và loại tệp.
 
-## 📦 Installation
+## 📦 Cài đặt
 
-### From VSIX (Recommended for Users)
-1. Download the `arch-viz-0.0.1.vsix` file.
-2. In VS Code, open the **Extensions** view (`Ctrl+Shift+X`).
-3. Click the `...` (Views and More Actions) in the top right.
-4. Select **Install from VSIX...** and choose the downloaded file.
+### Từ file VSIX (Dành cho người dùng)
+1. Tải về tệp `arch-viz-0.0.1.vsix`.
+2. Trong VS Code, mở trình quản lý **Extensions** (`Ctrl+Shift+X`).
+3. Nhấp vào biểu tượng `...` (nhiều lựa chọn hơn) ở góc trên bên phải.
+4. Chọn **Install from VSIX...** và chọn tệp vừa tải về.
 
-### For Developers
-1. Clone this repository.
-2. Run `npm install`.
-3. Press `F5` to open the Extension Development Host.
+### Dành cho lập trình viên
+1. Clone repository này về máy.
+2. Chạy lệnh `npm install`.
+3. Nhấn `F5` để mở cửa sổ Extension Development Host.
 
-## 🚀 How to Use
+## 🚀 Cách sử dụng
 
-1. **Open a Project**: Open any folder or workspace in VS Code.
-2. **Trigger the Command**: 
-   - Press `Ctrl + Shift + P` to open the Command Palette.
-   - Type **`Visualize Project Architecture`** and press `Enter`.
-3. **Interact**:
-   - **Left Click + Drag**: Pan the view.
-   - **Scroll Wheel**: Zoom in and out.
-   - **Hover**: See file/folder details in the floating panel.
+1. **Mở dự án**: Mở bất kỳ thư mục hoặc workspace nào trong VS Code.
+2. **Kích hoạt lệnh**: 
+   - Nhấn `Ctrl + Shift + P` để mở Command Palette.
+   - Gõ **`Visualize Project Architecture`** và nhấn `Enter`.
+3. **Tương tác**:
+   - **Click chuột trái + Kéo**: Di chuyển toàn bộ biểu đồ.
+   - **Cuộn chuột**: Phóng to hoặc thu nhỏ.
+   - **Di chuột**: Xem chi tiết tệp/thư mục ở bảng thông tin nổi.
 
-## 🎨 Design Language
+## 🎨 Quy ước màu sắc
 
-- 📁 **Directories**: Large indigo nodes.
-- 📄 **TypeScript/JS**: Blue/Yellow nodes.
-- 🎨 **CSS/HTML**: Blue/Orange nodes.
-- ⚙️ **JSON/Config**: White nodes.
+- 📁 **Thư mục**: Các nút lớn màu Indigo.
+- 📄 **TypeScript/JS**: Các nút màu Xanh dương/Vàng.
+- 🎨 **CSS/HTML**: Các nút màu Xanh nhạt/Cam.
+- ⚙️ **JSON/Cấu hình**: Các nút màu Trắng.
 
-## 📝 License
+## 📝 Giấy phép
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Dự án này được cấp phép theo Giấy phép MIT - xem tệp [LICENSE](LICENSE) để biết thêm chi tiết.
 
 ---
-Built with ❤️ by [chuitrai](https://github.com/chuitrai)
+Được xây dựng với ❤️ bởi [chuitrai](https://github.com/chuitrai)
