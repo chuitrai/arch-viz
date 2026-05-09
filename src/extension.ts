@@ -38,11 +38,22 @@ function walk(dir: string): any {
 
     if (stats.isDirectory()) {
         node.type = 'directory';
-        node.layer = detectLayer(name); // New: Detect architectural layer
+        node.layer = detectLayer(name);
+        node.role = detectRole(name);
+        node.tech = 'Unknown';
+        node.description = `Thành phần ${name} (Auto-detected)`;
+
         const exclude = ['node_modules', '.git', 'out', 'dist', '.gemini'];
         node.children = fs.readdirSync(dir)
             .filter(child => !exclude.includes(child))
             .map(child => walk(path.join(dir, child)));
+        
+        // Infer Tech from children
+        const exts = new Set(node.children.filter((c:any) => c.type === 'file').map((c:any) => c.extension));
+        if (exts.has('.ts') || exts.has('.js')) node.tech = 'Node.js / TS';
+        if (exts.has('.go')) node.tech = 'Golang';
+        if (exts.has('.py')) node.tech = 'Python';
+        if (exts.has('.java')) node.tech = 'Java';
         
         // Basic audit: Flag empty directories or very large ones
         if (node.children.length === 0) node.warning = 'Empty directory';
@@ -61,11 +72,20 @@ function walk(dir: string): any {
 
 function detectLayer(name: string): string {
     const n = name.toLowerCase();
-    if (['controller', 'api', 'routes', 'handler'].some(k => n.includes(k))) return 'API/Interface';
-    if (['service', 'usecase', 'logic', 'domain'].some(k => n.includes(k))) return 'Domain/Logic';
-    if (['repo', 'db', 'infrastructure', 'dal', 'persistence'].some(k => n.includes(k))) return 'Infrastructure/Data';
+    if (['controller', 'api', 'routes', 'handler', 'gateway'].some(k => n.includes(k))) return 'API/Interface';
+    if (['service', 'usecase', 'logic', 'domain', 'app'].some(k => n.includes(k))) return 'Domain/Logic';
+    if (['repo', 'db', 'infrastructure', 'dal', 'persistence', 'storage'].some(k => n.includes(k))) return 'Infrastructure/Data';
     if (['dto', 'model', 'entities', 'schema'].some(k => n.includes(k))) return 'Models/Shared';
     return 'Common';
+}
+
+function detectRole(name: string): string {
+    const n = name.toLowerCase();
+    if (['db', 'database', 'mongo', 'postgres', 'sql', 'redis', 'storage'].some(k => n.includes(k))) return 'Database';
+    if (['queue', 'kafka', 'rabbitmq', 'broker', 'pubsub'].some(k => n.includes(k))) return 'Message Broker';
+    if (['ui', 'frontend', 'web', 'client', 'app'].some(k => n.includes(k))) return 'Web Frontend';
+    if (['gateway', 'proxy', 'ingress'].some(k => n.includes(k))) return 'API Gateway';
+    return 'Service';
 }
 
 function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, data: any) {
@@ -94,6 +114,12 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, da
         </header>
 
         <main>
+            <div id="legend-panel">
+                <h4>C4 Model Legend</h4>
+                <div class="legend-item"><span class="legend-shape shape-rect"></span> Service/App</div>
+                <div class="legend-item"><span class="legend-shape shape-cyl"></span> Database</div>
+                <div class="legend-item"><span class="legend-shape" style="background:#818cf8; border-radius:50%"></span> File/Folder</div>
+            </div>
             <div id="viz-container">
                 <canvas id="viz-canvas"></canvas>
             </div>
@@ -103,7 +129,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, da
                     <h3>Architect AI</h3>
                 </div>
                 <div id="chat-messages">
-                    <div class="msg ai">Chào bạn! Tôi là trợ lý kiến trúc. Bạn muốn tôi phân tích cấu trúc dự án này không?</div>
+                    <div class="msg ai">Chào bạn! Tôi là trợ lý kiến trúc. Cấu trúc C4 Model đã được bật. Bạn muốn tôi phân tích điều gì?</div>
                 </div>
                 <div class="chat-input-area">
                     <input type="text" id="chat-input" placeholder="Hỏi về kiến trúc dự án...">
@@ -117,9 +143,11 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, da
             <p id="node-path"></p>
             <div class="node-meta">
                 <span id="node-layer" class="badge"></span>
+                <span id="node-role" class="c4-role"></span>
+                <span id="node-tech" class="c4-tech"></span>
                 <span id="node-warning" class="warning-badge hidden"></span>
             </div>
-            <div id="node-info"></div>
+            <p id="node-info" style="font-size: 0.8rem; margin-top: 0.5rem"></p>
         </div>
     </div>
     <script>

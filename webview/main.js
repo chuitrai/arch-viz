@@ -5,6 +5,8 @@ const nodeName = document.getElementById('node-name');
 const nodePath = document.getElementById('node-path');
 const nodeInfo = document.getElementById('node-info');
 const nodeLayer = document.getElementById('node-layer');
+const nodeRole = document.getElementById('node-role');
+const nodeTech = document.getElementById('node-tech');
 const nodeWarning = document.getElementById('node-warning');
 
 const chatInput = document.getElementById('chat-input');
@@ -102,12 +104,15 @@ function processData(root) {
             size: item.size || 0,
             extension: item.extension || '',
             layer: item.layer || 'Common',
+            role: item.role || 'File',
+            tech: item.tech || '',
+            desc: item.description || '',
             warning: item.warning || null,
             x: (Math.random() - 0.5) * 800,
             y: (Math.random() - 0.5) * 800,
             vx: 0,
             vy: 0,
-            radius: item.type === 'directory' ? 18 : 12
+            radius: item.type === 'directory' ? 22 : 12
         };
         
         nodes.push(node);
@@ -201,8 +206,30 @@ function draw() {
 
     nodes.forEach(node => {
         ctx.beginPath();
-        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        
         ctx.fillStyle = node.type === 'directory' ? '#818cf8' : getFileColor(node.extension);
+        
+        if (node.role === 'Database') {
+            // Draw Cylinder
+            ctx.fillStyle = '#10b981';
+            const w = node.radius * 2;
+            const h = node.radius * 1.5;
+            ctx.ellipse(node.x, node.y - h/2, w/2, h/4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(node.x - w/2, node.y - h/2, w, h);
+            ctx.beginPath();
+            ctx.ellipse(node.x, node.y + h/2, w/2, h/4, 0, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (node.type === 'directory' && viewMode === 'layered') {
+            // Draw Rectangle for Services in layered view
+            ctx.fillStyle = '#3b82f6';
+            ctx.roundRect(node.x - node.radius, node.y - node.radius, node.radius * 2, node.radius * 2, 4);
+            ctx.fill();
+        } else {
+            // Default Circle
+            ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
         
         if (node.warning) {
             ctx.strokeStyle = '#ef4444';
@@ -213,23 +240,23 @@ function draw() {
         if (node === hoveredNode) {
             ctx.shadowBlur = 20;
             ctx.shadowColor = ctx.fillStyle;
-            ctx.arc(node.x, node.y, node.radius + 3, 0, Math.PI * 2);
-        } else {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius + 5, 0, Math.PI * 2);
+            ctx.stroke();
             ctx.shadowBlur = 0;
         }
-        ctx.fill();
 
         // Draw Icon inside the node
-        ctx.font = `${node.radius * 1.2}px "Segoe UI Emoji", Arial`;
+        ctx.font = `${node.radius * 0.8}px "Segoe UI Emoji", Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ffffff';
         let icon = node.type === 'directory' ? '📁' : getFileIcon(node.extension);
         
-        // If the node is a layer root (just an example, or based on name)
         if (node.layer === 'API/Interface' && node.type === 'directory') icon = '🌐';
         if (node.layer === 'Domain/Logic' && node.type === 'directory') icon = '🧠';
         if (node.layer === 'Infrastructure/Data' && node.type === 'directory') icon = '🗄️';
+        if (node.role === 'Database') icon = '🛢️';
         if (node.warning) icon = '⚠️';
 
         ctx.fillText(icon, node.x, node.y);
@@ -271,6 +298,10 @@ canvas.addEventListener('mousemove', e => {
             nodeName.textContent = hoveredNode.name;
             nodePath.textContent = hoveredNode.id;
             nodeLayer.textContent = hoveredNode.layer;
+            nodeRole.textContent = hoveredNode.role;
+            nodeTech.textContent = hoveredNode.tech;
+            nodeInfo.textContent = hoveredNode.desc || (hoveredNode.type === 'file' ? `Size: ${(hoveredNode.size/1024).toFixed(2)} KB` : 'Thành phần hệ thống');
+            
             if (hoveredNode.warning) {
                 nodeWarning.textContent = hoveredNode.warning;
                 nodeWarning.classList.remove('hidden');
