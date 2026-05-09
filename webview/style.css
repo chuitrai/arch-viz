@@ -1,0 +1,104 @@
+:root {
+    --bg-color: #0f172a;
+    --text-color: #f8fafc;
+    --accent-color: #38bdf8;
+    --glass-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+header {
+    padding: 1rem 2rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
+
+h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#viz-container {
+    flex: 1;
+    position: relative;
+    cursor: grab;
+}
+
+#viz-container:active {
+    cursor: grabbing;
+}
+
+#viz-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+#details-panel {
+    position: absolute;
+    top: 5rem;
+    right: 2rem;
+    width: 300px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+    pointer-events: none;
+}
+
+#details-panel.hidden {
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+#details-panel h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+    color: var(--accent-color);
+}
+
+#details-panel p {
+    font-size: 0.875rem;
+    opacity: 0.7;
+    word-break: break-all;
+}
+
+.stats {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#app {
+    animation: fadeIn 0.8s ease-out;
+}
