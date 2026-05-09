@@ -107,7 +107,7 @@ function processData(root) {
             y: (Math.random() - 0.5) * 800,
             vx: 0,
             vy: 0,
-            radius: item.type === 'directory' ? 10 : 5
+            radius: item.type === 'directory' ? 18 : 12
         };
         
         nodes.push(node);
@@ -156,7 +156,7 @@ function updatePhysics() {
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const force = (dist - 60) * k;
+        const force = (dist - 80) * k;
         s.vx += (dx / dist) * force;
         s.vy += (dy / dist) * force;
         t.vx -= (dx / dist) * force;
@@ -218,8 +218,28 @@ function draw() {
             ctx.shadowBlur = 0;
         }
         ctx.fill();
+
+        // Draw Icon inside the node
+        ctx.font = `${node.radius * 1.2}px "Segoe UI Emoji", Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        let icon = node.type === 'directory' ? '📁' : getFileIcon(node.extension);
+        
+        // If the node is a layer root (just an example, or based on name)
+        if (node.layer === 'API/Interface' && node.type === 'directory') icon = '🌐';
+        if (node.layer === 'Domain/Logic' && node.type === 'directory') icon = '🧠';
+        if (node.layer === 'Infrastructure/Data' && node.type === 'directory') icon = '🗄️';
+        if (node.warning) icon = '⚠️';
+
+        ctx.fillText(icon, node.x, node.y);
     });
     ctx.restore();
+}
+
+function getFileIcon(ext) {
+    const icons = { '.ts': '⚡', '.js': '💛', '.go': '🐹', '.py': '🐍', '.html': '🖼️', '.css': '🎨', '.json': '⚙️', '.md': '📝', '.yml': '⚙️', '.yaml': '⚙️' };
+    return icons[ext] || '📄';
 }
 
 function getFileColor(ext) {
