@@ -38,18 +38,34 @@ function walk(dir: string): any {
 
     if (stats.isDirectory()) {
         node.type = 'directory';
-        // Exclude common heavy directories
+        node.layer = detectLayer(name); // New: Detect architectural layer
         const exclude = ['node_modules', '.git', 'out', 'dist', '.gemini'];
         node.children = fs.readdirSync(dir)
             .filter(child => !exclude.includes(child))
             .map(child => walk(path.join(dir, child)));
+        
+        // Basic audit: Flag empty directories or very large ones
+        if (node.children.length === 0) node.warning = 'Empty directory';
+        if (node.children.length > 20) node.warning = 'Folder too crowded (Architectural smell)';
     } else {
         node.type = 'file';
         node.size = stats.size;
         node.extension = path.extname(dir);
+        
+        // Audit: Large files
+        if (node.size > 50000) node.warning = 'Large file (Potential monolith)';
     }
 
     return node;
+}
+
+function detectLayer(name: string): string {
+    const n = name.toLowerCase();
+    if (['controller', 'api', 'routes', 'handler'].some(k => n.includes(k))) return 'API/Interface';
+    if (['service', 'usecase', 'logic', 'domain'].some(k => n.includes(k))) return 'Domain/Logic';
+    if (['repo', 'db', 'infrastructure', 'dal', 'persistence'].some(k => n.includes(k))) return 'Infrastructure/Data';
+    if (['dto', 'model', 'entities', 'schema'].some(k => n.includes(k))) return 'Models/Shared';
+    return 'Common';
 }
 
 function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, data: any) {
@@ -67,17 +83,42 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, da
 <body>
     <div id="app">
         <header>
-            <h1>Project Architecture</h1>
-            <div class="stats">
-                <span id="file-count">Scanning...</span>
+            <div class="logo">
+                <h1>ArchViz AI</h1>
+                <span class="badge">Enterprise</span>
+            </div>
+            <div class="controls">
+                <button id="toggle-layers">Layered View</button>
+                <button id="run-audit">Audit Project</button>
             </div>
         </header>
-        <div id="viz-container">
-            <canvas id="viz-canvas"></canvas>
-        </div>
+
+        <main>
+            <div id="viz-container">
+                <canvas id="viz-canvas"></canvas>
+            </div>
+
+            <aside id="chat-sidebar">
+                <div class="chat-header">
+                    <h3>Architect AI</h3>
+                </div>
+                <div id="chat-messages">
+                    <div class="msg ai">Chào bạn! Tôi là trợ lý kiến trúc. Bạn muốn tôi phân tích cấu trúc dự án này không?</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Hỏi về kiến trúc dự án...">
+                    <button id="send-btn">🚀</button>
+                </div>
+            </aside>
+        </main>
+
         <div id="details-panel" class="hidden">
             <h2 id="node-name"></h2>
             <p id="node-path"></p>
+            <div class="node-meta">
+                <span id="node-layer" class="badge"></span>
+                <span id="node-warning" class="warning-badge hidden"></span>
+            </div>
             <div id="node-info"></div>
         </div>
     </div>
