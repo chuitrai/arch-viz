@@ -20,6 +20,8 @@ const vizContainer = document.getElementById('viz-container');
 const mermaidContainer = document.getElementById('mermaid-container');
 const mermaidCode = document.getElementById('mermaid-code');
 const copyMermaidBtn = document.getElementById('copy-mermaid');
+const riskDashboard = document.getElementById('risk-dashboard');
+const closeDashboardBtn = document.getElementById('close-dashboard');
 
 let width, height;
 let nodes = [];
@@ -66,6 +68,50 @@ function setupEvents() {
     };
 
     runAuditBtn.onclick = runFullAudit;
+    closeDashboardBtn.onclick = () => riskDashboard.classList.add('hidden');
+}
+
+function runFullAudit() {
+    riskDashboard.classList.remove('hidden');
+    
+    // Calculate metrics
+    const codeFiles = nodes.filter(n => n.type === 'file');
+    const totalComponents = codeFiles.length;
+    const smells = nodes.filter(n => n.warning).length;
+    const avgCoupling = links.filter(l => l.type === 'dependency').length / (totalComponents || 1);
+    
+    document.getElementById('metric-total').textContent = totalComponents;
+    document.getElementById('metric-smells').textContent = smells;
+    document.getElementById('metric-coupling').textContent = avgCoupling.toFixed(2);
+    
+    // Calculate Health Grade
+    const avgRisk = codeFiles.reduce((acc, n) => acc + (n.riskScore || 0), 0) / (totalComponents || 1);
+    const gradeEl = document.getElementById('health-grade');
+    const descEl = document.getElementById('health-desc');
+    
+    if (avgRisk < 5) { gradeEl.textContent = 'A'; gradeEl.style.color = '#34d399'; descEl.textContent = 'Kiến trúc xuất sắc, cấu trúc module rất tốt.'; }
+    else if (avgRisk < 15) { gradeEl.textContent = 'B'; gradeEl.style.color = '#fbbf24'; descEl.textContent = 'Có một số nguy cơ nhỏ cần lưu ý.'; }
+    else if (avgRisk < 30) { gradeEl.textContent = 'C'; gradeEl.style.color = '#f97316'; descEl.textContent = 'Kiến trúc có dấu hiệu xuống cấp (Tech Debt).'; }
+    else { gradeEl.textContent = 'D'; gradeEl.style.color = '#ef4444'; descEl.textContent = 'Nguy hiểm: Codebase có quá nhiều Monolith và vi phạm.'; }
+
+    // Populate Table
+    const tbody = document.getElementById('risk-table-body');
+    tbody.innerHTML = '';
+    
+    const sortedRisks = [...codeFiles].sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0)).slice(0, 5);
+    sortedRisks.forEach(node => {
+        if (!node.riskScore) return;
+        const color = node.riskScore > 30 ? '#ef4444' : (node.riskScore > 15 ? '#fbbf24' : '#34d399');
+        const issue = node.warning || 'Coupling/Size cao';
+        tbody.innerHTML += `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:1rem;"><strong>${node.name}</strong><br><span style="font-size:0.7rem;color:#64748b">${node.layer}</span></td>
+                <td style="padding:1rem;"><span style="color:${color}; font-weight:bold">${node.riskScore}</span> pts</td>
+                <td style="padding:1rem; color:#fca5a5; font-size:0.8rem;">${issue}</td>
+                <td style="padding:1rem;"><button onclick="alert('Hãy mở file ${node.name} để tiến hành refactor.')">Refactor</button></td>
+            </tr>
+        `;
+    });
 }
 
 function generateMermaid() {
@@ -164,6 +210,7 @@ function processData(root, deps = []) {
             desc: item.description || '',
             warning: item.warning || null,
             suggestion: item.suggestion || null,
+            riskScore: item.riskScore || 0,
             x: (Math.random() - 0.5) * 800,
             y: (Math.random() - 0.5) * 800,
             vx: 0,
