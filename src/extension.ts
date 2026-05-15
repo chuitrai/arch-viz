@@ -28,10 +28,28 @@ function getProjectStructure() {
     }
 
     const rootPath = workspaceFolders[0].uri.fsPath;
-    return walk(rootPath);
+    const allFiles: any[] = [];
+    const tree = walk(rootPath, allFiles);
+
+    const dependencies: any[] = [];
+    for (const file of allFiles) {
+        if (file.imports && file.imports.length > 0) {
+            for (const imp of file.imports) {
+                // Fuzzy match
+                const impName = path.basename(imp).replace(/['"]/g, '');
+                if (impName.length < 3) continue;
+                const target = allFiles.find(f => f.name.includes(impName) || f.path.replace(/\\/g, '/').includes(imp));
+                if (target && target.path !== file.path) {
+                    dependencies.push({ source: file.path, target: target.path });
+                }
+            }
+        }
+    }
+
+    return { tree, dependencies };
 }
 
-function walk(dir: string): any {
+function walk(dir: string, allFiles: any[]): any {
     const name = path.basename(dir);
     const stats = fs.statSync(dir);
     const node: any = { name, path: dir };
@@ -46,7 +64,7 @@ function walk(dir: string): any {
         const exclude = ['node_modules', '.git', 'out', 'dist', '.gemini'];
         node.children = fs.readdirSync(dir)
             .filter(child => !exclude.includes(child))
-            .map(child => walk(path.join(dir, child)));
+            .map(child => walk(path.join(dir, child), allFiles));
         
         // Infer Tech from children
         const exts = new Set(node.children.filter((c:any) => c.type === 'file').map((c:any) => c.extension));
@@ -74,13 +92,26 @@ function walk(dir: string): any {
                 if (loc > 500) {
                     node.warning = `God Class (Quá dài: ${loc} dòng code)`;
                 } else {
-                    // Check architecture violations (e.g. Domain depending on API)
                     const dirLower = dir.toLowerCase();
                     const isDomain = ['domain', 'service', 'logic', 'usecase'].some(k => dirLower.includes(k));
+                    const isController = ['controller', 'api', 'routes', 'handler'].some(k => dirLower.includes(k));
+                    
+                    // Extract imports for dependency graph
+                    const importRegex = /(?:import|require)[^'"]*['"]([^'"]+)['"]/g;
+                    let match;
+                    node.imports = [];
+                    while ((match = importRegex.exec(content)) !== null) {
+                        node.imports.push(match[1]);
+                    }
+
                     if (isDomain) {
-                        const importRegex = /(import|require|use).*[\/'"](controller|api|routes|handler|gateway)[\/'"]/i;
-                        if (importRegex.test(content)) {
+                        if (node.imports.some((i: string) => /(controller|api|routes|handler|gateway)/i.test(i))) {
                             node.warning = 'Cấm (Forbidden): Domain gọi ngược ra API/Controller';
+                        }
+                    }
+                    if (isController) {
+                        if (node.imports.some((i: string) => /(repo|db|infrastructure|dal|storage)/i.test(i))) {
+                            node.warning = 'Lỗi Kiến Trúc: Controller gọi thẳng Repository (Bỏ qua Service)';
                         }
                     }
                 }
@@ -93,6 +124,7 @@ function walk(dir: string): any {
         if (!node.warning && node.size > 500000) {
             node.warning = 'File quá lớn (Potential monolith)';
         }
+        allFiles.push(node);
     }
 
     return node;
@@ -137,6 +169,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, da
             </div>
             <div class="controls">
                 <button id="toggle-layers">Layered View</button>
+                <button id="toggle-mermaid">Mermaid View</button>
                 <button id="run-audit">Audit Project</button>
             </div>
         </header>
@@ -150,6 +183,12 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, da
             </div>
             <div id="viz-container">
                 <canvas id="viz-canvas"></canvas>
+            </div>
+            <div id="mermaid-container" class="hidden" style="flex:1; background:#1e293b; padding:2rem; overflow:auto;">
+                <h3 style="color:#fff;">Mermaid Flowchart</h3>
+                <p style="color:#94a3b8; font-size:0.8rem">Copy code này vào file .md của bạn trên GitHub để vẽ sơ đồ.</p>
+                <button id="copy-mermaid" style="margin-bottom:1rem">Copy Code</button>
+                <pre><code id="mermaid-code" style="color:#38bdf8; font-family:monospace"></code></pre>
             </div>
 
             <aside id="chat-sidebar">

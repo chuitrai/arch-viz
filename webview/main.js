@@ -13,7 +13,12 @@ const chatInput = document.getElementById('chat-input');
 const chatMessages = document.getElementById('chat-messages');
 const sendBtn = document.getElementById('send-btn');
 const toggleLayersBtn = document.getElementById('toggle-layers');
+const toggleMermaidBtn = document.getElementById('toggle-mermaid');
 const runAuditBtn = document.getElementById('run-audit');
+const vizContainer = document.getElementById('viz-container');
+const mermaidContainer = document.getElementById('mermaid-container');
+const mermaidCode = document.getElementById('mermaid-code');
+const copyMermaidBtn = document.getElementById('copy-mermaid');
 
 let width, height;
 let nodes = [];
@@ -29,7 +34,7 @@ const layers = ['API/Interface', 'Domain/Logic', 'Infrastructure/Data', 'Models/
 function init() {
     resize();
     window.addEventListener('resize', resize);
-    processData(window.projectData);
+    processData(window.projectData.tree, window.projectData.dependencies);
     setupEvents();
     requestAnimationFrame(animate);
 }
@@ -38,7 +43,55 @@ function setupEvents() {
     sendBtn.onclick = handleChat;
     chatInput.onkeypress = (e) => e.key === 'Enter' && handleChat();
     toggleLayersBtn.onclick = () => viewMode = viewMode === 'force' ? 'layered' : 'force';
+    
+    toggleMermaidBtn.onclick = () => {
+        const isMermaid = !mermaidContainer.classList.contains('hidden');
+        if (isMermaid) {
+            mermaidContainer.classList.add('hidden');
+            vizContainer.classList.remove('hidden');
+            toggleMermaidBtn.textContent = 'Mermaid View';
+        } else {
+            vizContainer.classList.add('hidden');
+            mermaidContainer.classList.remove('hidden');
+            toggleMermaidBtn.textContent = 'Graph View';
+            generateMermaid();
+        }
+    };
+    
+    copyMermaidBtn.onclick = () => {
+        navigator.clipboard.writeText(mermaidCode.textContent);
+        copyMermaidBtn.textContent = 'Copied!';
+        setTimeout(() => copyMermaidBtn.textContent = 'Copy Code', 2000);
+    };
+
     runAuditBtn.onclick = runFullAudit;
+}
+
+function generateMermaid() {
+    let code = 'flowchart LR\n';
+    // Group by layer
+    const layerNodes = {};
+    nodes.forEach(n => {
+        if (!layerNodes[n.layer]) layerNodes[n.layer] = [];
+        layerNodes[n.layer].push(n);
+    });
+    
+    for (const [layer, list] of Object.entries(layerNodes)) {
+        code += `    subgraph ${layer.replace(/[^a-zA-Z0-9]/g, '_')}[${layer}]\n`;
+        list.forEach(n => {
+            const id = n.id.replace(/[^a-zA-Z0-9]/g, '_');
+            const shape = n.role === 'Database' ? `[(${n.name})]` : `[${n.name}]`;
+            code += `        ${id}${shape}\n`;
+        });
+        code += `    end\n`;
+    }
+    
+    links.filter(l => l.type === 'dependency').forEach(l => {
+        const sid = l.source.replace(/[^a-zA-Z0-9]/g, '_');
+        const tid = l.target.replace(/[^a-zA-Z0-9]/g, '_');
+        code += `    ${sid} -->|Calls| ${tid}\n`;
+    });
+    mermaidCode.textContent = code;
 }
 
 function handleChat() {
@@ -94,7 +147,7 @@ function resize() {
     transform.y = height / 2;
 }
 
-function processData(root) {
+function processData(root, deps = []) {
     function flatten(item, parentId = null) {
         const id = item.path;
         const node = {
@@ -117,10 +170,14 @@ function processData(root) {
         };
         
         nodes.push(node);
-        if (parentId) links.push({ source: parentId, target: id });
+        if (parentId) links.push({ source: parentId, target: id, type: 'tree' });
         if (item.children) item.children.forEach(child => flatten(child, id));
     }
     flatten(root);
+
+    deps.forEach(dep => {
+        links.push({ source: dep.source, target: dep.target, type: 'dependency' });
+    });
 }
 
 function animate() {
@@ -201,8 +258,36 @@ function draw() {
         const s = nodes.find(n => n.id === link.source);
         const t = nodes.find(n => n.id === link.target);
         if (!s || !t) return;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(t.x, t.y); ctx.stroke();
+        
+        ctx.beginPath();
+        if (link.type === 'dependency') {
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)'; // Red-ish for dependencies to make them visible
+            ctx.lineWidth = 2;
+            ctx.moveTo(s.x, s.y); 
+            ctx.lineTo(t.x, t.y);
+            ctx.stroke();
+
+            // Draw arrow
+            const dx = t.x - s.x;
+            const dy = t.y - s.y;
+            const angle = Math.atan2(dy, dx);
+            const r = t.radius + 3; // Offset arrow from center
+            const tox = t.x - r * Math.cos(angle);
+            const toy = t.y - r * Math.sin(angle);
+            
+            ctx.beginPath();
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - 10 * Math.cos(angle - Math.PI/6), toy - 10 * Math.sin(angle - Math.PI/6));
+            ctx.lineTo(tox - 10 * Math.cos(angle + Math.PI/6), toy - 10 * Math.sin(angle + Math.PI/6));
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
+            ctx.fill();
+        } else {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+            ctx.moveTo(s.x, s.y); 
+            ctx.lineTo(t.x, t.y); 
+            ctx.stroke();
+        }
     });
 
     nodes.forEach(node => {
