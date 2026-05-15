@@ -102,6 +102,7 @@ function processData(root) {
             name: item.name,
             type: item.type,
             size: item.size || 0,
+            loc: item.loc || 0,
             extension: item.extension || '',
             layer: item.layer || 'Common',
             role: item.role || 'File',
@@ -300,7 +301,13 @@ canvas.addEventListener('mousemove', e => {
             nodeLayer.textContent = hoveredNode.layer;
             nodeRole.textContent = hoveredNode.role;
             nodeTech.textContent = hoveredNode.tech;
-            nodeInfo.textContent = hoveredNode.desc || (hoveredNode.type === 'file' ? `Size: ${(hoveredNode.size/1024).toFixed(2)} KB` : 'Thành phần hệ thống');
+            
+            let infoText = hoveredNode.desc || 'Thành phần hệ thống';
+            if (hoveredNode.type === 'file') {
+                infoText = `Size: ${(hoveredNode.size/1024).toFixed(2)} KB`;
+                if (hoveredNode.loc > 0) infoText += ` • LOC: ${hoveredNode.loc} lines`;
+            }
+            nodeInfo.textContent = infoText;
             
             if (hoveredNode.warning) {
                 nodeWarning.textContent = hoveredNode.warning;

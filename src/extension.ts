@@ -63,8 +63,36 @@ function walk(dir: string): any {
         node.size = stats.size;
         node.extension = path.extname(dir);
         
-        // Audit: Large files
-        if (node.size > 50000) node.warning = 'Large file (Potential monolith)';
+        // Static Linter: God Class & Layer Violation
+        const CODE_EXTENSIONS = ['.ts', '.js', '.go', '.py', '.java', '.cs', '.php'];
+        if (CODE_EXTENSIONS.includes(node.extension) && node.size < 500000) { // Limit size for speed
+            try {
+                const content = fs.readFileSync(dir, 'utf8');
+                const loc = content.split('\n').length;
+                node.loc = loc;
+                
+                if (loc > 1000) {
+                    node.warning = `God Class (Quá dài: ${loc} dòng code)`;
+                } else {
+                    // Check architecture violations (e.g. Domain depending on API)
+                    const dirLower = dir.toLowerCase();
+                    const isDomain = ['domain', 'service', 'logic', 'usecase'].some(k => dirLower.includes(k));
+                    if (isDomain) {
+                        const importRegex = /(import|require|use).*[\/'"](controller|api|routes|handler|gateway)[\/'"]/i;
+                        if (importRegex.test(content)) {
+                            node.warning = 'Cấm (Forbidden): Domain gọi ngược ra API/Controller';
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignore read errors
+            }
+        }
+        
+        // Audit: Large files generic check
+        if (!node.warning && node.size > 500000) {
+            node.warning = 'File quá lớn (Potential monolith)';
+        }
     }
 
     return node;
