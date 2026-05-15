@@ -71,7 +71,7 @@ function walk(dir: string): any {
                 const loc = content.split('\n').length;
                 node.loc = loc;
                 
-                if (loc > 1000) {
+                if (loc > 500) {
                     node.warning = `God Class (Quá dài: ${loc} dòng code)`;
                 } else {
                     // Check architecture violations (e.g. Domain depending on API)
