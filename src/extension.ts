@@ -91,6 +91,7 @@ function walk(dir: string, allFiles: any[]): any {
                 
                 if (loc > 500) {
                     node.warning = `God Class (Quá dài: ${loc} dòng code)`;
+                    node.suggestion = `Refactor: Tách class này ra làm các module nhỏ hơn theo Single Responsibility Principle. Xem xét áp dụng Facade Pattern.`;
                 } else {
                     const dirLower = dir.toLowerCase();
                     const isDomain = ['domain', 'service', 'logic', 'usecase'].some(k => dirLower.includes(k));
@@ -107,11 +108,13 @@ function walk(dir: string, allFiles: any[]): any {
                     if (isDomain) {
                         if (node.imports.some((i: string) => /(controller|api|routes|handler|gateway)/i.test(i))) {
                             node.warning = 'Cấm (Forbidden): Domain gọi ngược ra API/Controller';
+                            node.suggestion = `Refactor: Đảo ngược phụ thuộc (Dependency Inversion). Tạo một interface ở tầng Domain và implement nó ở tầng API.`;
                         }
                     }
                     if (isController) {
                         if (node.imports.some((i: string) => /(repo|db|infrastructure|dal|storage)/i.test(i))) {
-                            node.warning = 'Lỗi Kiến Trúc: Controller gọi thẳng Repository (Bỏ qua Service)';
+                            node.warning = 'Lỗi Kiến Trúc: Controller gọi thẳng Repository';
+                            node.suggestion = `Refactor: Thêm một tầng Service/UseCase ở giữa. Controller chỉ nên gọi Service, và Service gọi Repository.`;
                         }
                     }
                 }
@@ -215,6 +218,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, da
                 <span id="node-warning" class="warning-badge hidden"></span>
             </div>
             <p id="node-info" style="font-size: 0.8rem; margin-top: 0.5rem"></p>
+            <div id="node-suggestion" class="suggestion-block hidden"></div>
         </div>
     </div>
     <script>

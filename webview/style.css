@@ -2,8 +2,9 @@
     --bg-color: #0f172a;
     --text-color: #f8fafc;
     --accent-color: #38bdf8;
-    --glass-bg: rgba(30, 41, 59, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --primary-gradient: linear-gradient(135deg, #38bdf8, #818cf8);
 }
 
 body {
@@ -23,9 +24,10 @@ body {
 
 header {
     padding: 0.75rem 1.5rem;
-    background: var(--glass-bg);
-    backdrop-filter: blur(16px);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -36,6 +38,15 @@ header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+}
+
+.logo h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
 }
 
 .badge {
@@ -54,14 +65,16 @@ header {
 }
 
 button {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--glass-border);
     color: white;
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.8rem;
-    transition: all 0.2s;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 button:hover {
@@ -112,9 +125,10 @@ main {
 }
 
 .msg.ai {
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.2);
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.05));
+    border: 1px solid rgba(129, 140, 248, 0.2);
     align-self: flex-start;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .msg.user {
@@ -175,11 +189,32 @@ main {
 }
 
 .warning-badge {
-    background: #ef4444;
-    color: white;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid #ef4444;
+    color: #fca5a5;
     font-size: 0.65rem;
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+}
+
+.suggestion-block {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(16, 185, 129, 0.1);
+    border-left: 3px solid #10b981;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #a7f3d0;
+    line-height: 1.5;
+}
+
+.suggestion-block code {
+    background: rgba(0,0,0,0.3);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    color: #38bdf8;
 }
 
 #legend-panel {

@@ -8,6 +8,7 @@ const nodeLayer = document.getElementById('node-layer');
 const nodeRole = document.getElementById('node-role');
 const nodeTech = document.getElementById('node-tech');
 const nodeWarning = document.getElementById('node-warning');
+const nodeSuggestion = document.getElementById('node-suggestion');
 
 const chatInput = document.getElementById('chat-input');
 const chatMessages = document.getElementById('chat-messages');
@@ -162,6 +163,7 @@ function processData(root, deps = []) {
             tech: item.tech || '',
             desc: item.description || '',
             warning: item.warning || null,
+            suggestion: item.suggestion || null,
             x: (Math.random() - 0.5) * 800,
             y: (Math.random() - 0.5) * 800,
             vx: 0,
@@ -397,8 +399,15 @@ canvas.addEventListener('mousemove', e => {
             if (hoveredNode.warning) {
                 nodeWarning.textContent = hoveredNode.warning;
                 nodeWarning.classList.remove('hidden');
+                if (hoveredNode.suggestion) {
+                    nodeSuggestion.innerHTML = `<strong>💡 Gợi ý AI:</strong> ${hoveredNode.suggestion}<br><br><em style="font-size:0.7rem;color:#64748b">(Click vào node để chat với AI)</em>`;
+                    nodeSuggestion.classList.remove('hidden');
+                } else {
+                    nodeSuggestion.classList.add('hidden');
+                }
             } else {
                 nodeWarning.classList.add('hidden');
+                nodeSuggestion.classList.add('hidden');
             }
         } else {
             detailsPanel.classList.add('hidden');
@@ -406,8 +415,22 @@ canvas.addEventListener('mousemove', e => {
     }
 });
 
-canvas.addEventListener('mousedown', e => { dragging = true; lastMousePos = { x: e.clientX, y: e.clientY }; });
-window.addEventListener('mouseup', () => dragging = false);
+canvas.addEventListener('mousedown', e => { 
+    dragging = true; 
+    lastMousePos = { x: e.clientX, y: e.clientY }; 
+});
+window.addEventListener('mouseup', e => { 
+    if (dragging && hoveredNode && lastMousePos.x === e.clientX && lastMousePos.y === e.clientY) {
+        // Handle click event (no drag happened)
+        if (hoveredNode.suggestion) {
+            addMessage(`Bạn phân tích giúp tôi file ${hoveredNode.name} đang bị lỗi: ${hoveredNode.warning}`, 'user');
+            setTimeout(() => {
+                addMessage(hoveredNode.suggestion + " Bạn có muốn tôi sinh code mẫu (snippet) cho bạn không?", 'ai');
+            }, 600);
+        }
+    }
+    dragging = false; 
+});
 canvas.addEventListener('wheel', e => {
     e.preventDefault();
     transform.k *= (1 - e.deltaY * 0.001);
